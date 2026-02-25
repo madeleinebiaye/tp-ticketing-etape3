@@ -89,7 +89,7 @@ $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
 
                     <div class="project-actions">
-                        <a href="#" class="btn-link">
+                        <a href="project-detail.php?id=<?= $project['id'] ?>" class="btn-link">
                             Voir les détails du projet
                         </a>
                     </div>
