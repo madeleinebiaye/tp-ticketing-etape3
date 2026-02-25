@@ -1,33 +1,38 @@
 <?php
 session_start();
+require_once "config/database.php";
 
-// Vérifier que des tickets existent
-if (!isset($_SESSION["tickets"])) {
-    $_SESSION["tickets"] = [];
+if (!isset($_GET['id'])) {
+    die("Ticket non spécifié.");
 }
 
-// Récupérer l'ID depuis l'URL
-$id = $_GET["id"] ?? null;
+$ticket_id = (int) $_GET['id'];
 
-// Vérification
-if ($id === null || !isset($_SESSION["tickets"][$id])) {
-    $ticket = null;
-} else {
-    $ticket = $_SESSION["tickets"][$id];
+$stmt = $pdo->prepare("
+    SELECT tickets.*, projects.name AS project_name
+    FROM tickets
+    JOIN projects ON tickets.project_id = projects.id
+    WHERE tickets.id = ?
+");
+
+$stmt->execute([$ticket_id]);
+$ticket = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$ticket) {
+    die("Ticket introuvable.");
 }
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Détail du ticket | TP Ticketing</title>
+    <title>Détail du ticket</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
 
 <header class="main-header"
-        style="position: fixed; top: 0; left: 0; right: 0; background-color: #2c7be5; z-index: 1000;">
+        style="position: fixed; top: 0; left: 0; right: 0; background-color: #2c7be5;">
     <div class="header-content">
         <div class="logo">
             <a href="index.php">
@@ -39,54 +44,27 @@ if ($id === null || !isset($_SESSION["tickets"][$id])) {
             <a href="dashboard.php">Dashboard</a>
             <a href="projects.php">Projets</a>
             <a href="tickets.php">Tickets</a>
-            <a href="ticket-create.php">Créer un ticket</a>
-            <a href="project-create.php">Créer un projet</a>
-            <a href="profile.php">Profil</a>
-            <a href="settings.php">Paramètres</a>
-            <a href="index.php">Déconnexion</a>
         </nav>
     </div>
 </header>
 
-<main class="ticket-detail" style="margin-top:100px;">
+<main style="margin-top:100px; padding:20px;">
 
-<?php if ($ticket === null): ?>
+<h1>Détail du ticket</h1>
 
-    <h1>Ticket introuvable</h1>
-    <p>Le ticket demandé n’existe pas.</p>
+<div style="border:1px solid #ccc; padding:20px;">
+    <h2><?= htmlspecialchars($ticket["title"]) ?></h2>
 
-<?php else: ?>
+    <p><strong>Projet :</strong> <?= htmlspecialchars($ticket["project_name"]) ?></p>
+    <p><strong>Description :</strong> <?= htmlspecialchars($ticket["description"]) ?></p>
+    <p><strong>Statut :</strong> <?= htmlspecialchars($ticket["status"]) ?></p>
+    <p><strong>Type :</strong> <?= htmlspecialchars($ticket["type"]) ?></p>
+    <p><strong>Temps estimé :</strong> <?= htmlspecialchars($ticket["estimated_time"]) ?> h</p>
+    <p><strong>Date création :</strong> <?= htmlspecialchars($ticket["created_at"]) ?></p>
+</div>
 
-    <h1>Détail du ticket</h1>
-
-    <section class="ticket-info">
-        <p><strong>Titre :</strong> <?= $ticket["title"] ?></p>
-        <p><strong>Statut :</strong> <?= $ticket["status"] ?></p>
-        <p><strong>Type :</strong> <?= $ticket["type"] ?></p>
-        <p><strong>Priorité :</strong> <?= $ticket["priority"] ?></p>
-    </section>
-
-    <section class="ticket-description">
-        <h2>Description</h2>
-        <p><?= $ticket["description"] ?></p>
-    </section>
-
-    <section class="ticket-time">
-        <h2>Temps</h2>
-        <p>Temps estimé : <?= $ticket["estimated_time"] ?> h</p>
-        <p>Temps réel : <?= $ticket["spent_time"] ?> h</p>
-    </section>
-
-    <section class="ticket-time">
-        <h2>Collaborateurs</h2>
-        <ul>
-            <?php foreach ($ticket["collaborators"] as $collab): ?>
-                <li><?= $collab ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </section>
-
-<?php endif; ?>
+<br>
+<a href="tickets.php">⬅ Retour à la liste</a>
 
 </main>
 

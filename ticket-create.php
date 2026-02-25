@@ -1,26 +1,20 @@
 <?php
 session_start();
-
-// =============================
-// INITIALISATION SESSION TICKETS
-// =============================
-if (!isset($_SESSION["tickets"])) {
-    $_SESSION["tickets"] = [];
-}
+require_once "config/database.php";
 
 $message = "";
 $messageType = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    // Sécurisation minimale
+    // On garde EXACTEMENT ta logique
     $title = htmlspecialchars(trim($_POST["title"] ?? ""));
     $description = htmlspecialchars(trim($_POST["description"] ?? ""));
     $status = htmlspecialchars(trim($_POST["status"] ?? ""));
     $priority = htmlspecialchars(trim($_POST["priority"] ?? ""));
     $type = htmlspecialchars(trim($_POST["type"] ?? ""));
-    $estimated_time = htmlspecialchars(trim($_POST["estimated_time"] ?? ""));
-    $spent_time = htmlspecialchars(trim($_POST["spent_time"] ?? ""));
+    $estimated_time = htmlspecialchars(trim($_POST["estimated_time"] ?? 0));
+    $spent_time = htmlspecialchars(trim($_POST["spent_time"] ?? 0));
     $collaborators = $_POST["collaborators"] ?? [];
 
     if (empty($title) || empty($description)) {
@@ -28,24 +22,33 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $messageType = "error";
     } else {
 
-        // Création du ticket
-        $newTicket = [
-            "title" => $title,
-            "description" => $description,
-            "status" => $status,
-            "priority" => $priority,
-            "type" => $type,
-            "estimated_time" => $estimated_time,
-            "spent_time" => $spent_time,
-            "collaborators" => $collaborators
-        ];
+        // Conversion type pour la BDD
+        $typeBDD = ($type === "Facturable") ? "billable" : "included";
 
-        // Ajout en session
-        $_SESSION["tickets"][] = $newTicket;
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO tickets 
+                (project_id, title, description, status, type, estimated_time)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
 
-        // Redirection vers liste tickets
-        header("Location: tickets.php");
-        exit();
+            // On garde project_id = 1 pour l'instant
+            $stmt->execute([
+                1,
+                $title,
+                $description,
+                $status,
+                $typeBDD,
+                $estimated_time
+            ]);
+
+            header("Location: tickets.php");
+            exit();
+
+        } catch (PDOException $e) {
+            $message = "Erreur BDD : " . $e->getMessage();
+            $messageType = "error";
+        }
     }
 }
 ?>

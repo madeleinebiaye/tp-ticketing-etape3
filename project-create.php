@@ -1,29 +1,40 @@
 <?php
-// =============================
-// TRAITEMENT FORMULAIRE PROJET
-// =============================
+session_start();
+require_once "config/database.php";
 
 $message = "";
-$messageType = ""; // success ou error
+$messageType = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    // Sécurisation minimale
     $title = htmlspecialchars(trim($_POST["title"] ?? ""));
     $description = htmlspecialchars(trim($_POST["description"] ?? ""));
-    $status = htmlspecialchars(trim($_POST["status"] ?? ""));
-    $priority = htmlspecialchars(trim($_POST["priority"] ?? ""));
-    $type = htmlspecialchars(trim($_POST["type"] ?? ""));
-    $estimated_time = htmlspecialchars(trim($_POST["estimated_time"] ?? ""));
-    $spent_time = htmlspecialchars(trim($_POST["spent_time"] ?? ""));
 
-    // Validation minimale
     if (empty($title) || empty($description)) {
         $message = "Tous les champs obligatoires doivent être remplis.";
         $messageType = "error";
     } else {
-        $message = "Projet créé avec succès !";
-        $messageType = "success";
+
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO projects (client_id, name, description)
+                VALUES (?, ?, ?)
+            ");
+
+            // Pour l'instant on met client_id = 1 (client test)
+            $stmt->execute([
+                1,
+                $title,
+                $description
+            ]);
+
+            header("Location: projects.php");
+            exit();
+
+        } catch (PDOException $e) {
+            $message = "Erreur BDD : " . $e->getMessage();
+            $messageType = "error";
+        }
     }
 }
 ?>

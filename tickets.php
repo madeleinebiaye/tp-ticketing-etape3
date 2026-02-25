@@ -1,12 +1,15 @@
 <?php
 session_start();
+require_once "config/database.php";
 
-// Initialisation si vide
-if (!isset($_SESSION["tickets"])) {
-    $_SESSION["tickets"] = [];
-}
+// Récupération des tickets depuis la base de données
+$stmt = $pdo->query("
+    SELECT tickets.*, projects.name AS project_name
+    FROM tickets
+    JOIN projects ON tickets.project_id = projects.id
+");
 
-$tickets = $_SESSION["tickets"];
+$tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -34,7 +37,7 @@ $tickets = $_SESSION["tickets"];
             <a href="ticket-create.php">Créer un ticket</a>
             <a href="project-create.php">Créer un projet</a>
             <a href="profile.php">Profil</a>
-            <a href="settings.php">Paramètres</a>
+            <a href="setting.php">Paramètres</a>
             <a href="index.php">Déconnexion</a>
         </nav>
     </div>
@@ -64,13 +67,13 @@ $tickets = $_SESSION["tickets"];
         </tr>
     <?php else : ?>
 
-        <?php foreach ($tickets as $index => $ticket) : ?>
+        <?php foreach ($tickets as $ticket) : ?>
             <tr>
-                <td><?= $ticket["title"] ?></td>
-                <td><?= $ticket["status"] ?></td>
-                <td><?= $ticket["type"] ?></td>
+                <td><?= htmlspecialchars($ticket["title"]) ?></td>
+                <td><?= htmlspecialchars($ticket["status"]) ?></td>
+                <td><?= htmlspecialchars($ticket["type"]) ?></td>
                 <td>
-                    <a href="ticket-detail.php?id=<?= $index ?>">
+                    <a href="ticket-detail.php?id=<?= $ticket['id'] ?>">
                         Voir détail
                     </a>
                 </td>

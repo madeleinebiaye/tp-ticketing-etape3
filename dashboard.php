@@ -1,23 +1,31 @@
 <?php
 session_start();
+require_once "config/database.php";
 
-$tickets = $_SESSION["tickets"] ?? [];
+// Total tickets
+$stmtTotal = $pdo->query("SELECT COUNT(*) FROM tickets");
+$totalTickets = $stmtTotal->fetchColumn();
 
-$totalTickets = count($tickets);
+// Tickets par statut
+$stmtStatus = $pdo->query("
+    SELECT status, COUNT(*) as total
+    FROM tickets
+    GROUP BY status
+");
 
 $nbEnCours = 0;
 $nbNouveau = 0;
 $nbTermine = 0;
 
-foreach ($tickets as $ticket) {
-    if ($ticket["status"] === "En cours") {
-        $nbEnCours++;
+while ($row = $stmtStatus->fetch(PDO::FETCH_ASSOC)) {
+    if ($row["status"] === "En cours") {
+        $nbEnCours = $row["total"];
     }
-    if ($ticket["status"] === "Nouveau") {
-        $nbNouveau++;
+    if ($row["status"] === "Nouveau") {
+        $nbNouveau = $row["total"];
     }
-    if ($ticket["status"] === "Terminé") {
-        $nbTermine++;
+    if ($row["status"] === "Terminé") {
+        $nbTermine = $row["total"];
     }
 }
 ?>

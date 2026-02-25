@@ -1,65 +1,15 @@
 <?php
-// =============================
-// SIMULATION LISTE DES PROJETS
-// =============================
+session_start();
+require_once "config/database.php";
 
-$projects = [
-    [
-        "title" => "Site vitrine",
-        "client" => "Client A",
-        "collaborators" => "Alice, Bob",
-        "hours_remaining" => 12,
-        "progress" => 60,
-        "status" => "Actif"
-    ],
-    [
-        "title" => "Application interne",
-        "client" => "Client B",
-        "collaborators" => "Claire",
-        "hours_remaining" => 6,
-        "progress" => 30,
-        "status" => "À surveiller"
-    ],
-    [
-        "title" => "Plateforme e-commerce",
-        "client" => "Client C",
-        "collaborators" => "David, Emma",
-        "hours_remaining" => 20,
-        "progress" => 75,
-        "status" => "Actif"
-    ],
-    [
-        "title" => "Maintenance serveur",
-        "client" => "Client D",
-        "collaborators" => "Lucas",
-        "hours_remaining" => 4,
-        "progress" => 20,
-        "status" => "À surveiller"
-    ],
-    [
-        "title" => "Refonte UX mobile",
-        "client" => "Client E",
-        "collaborators" => "Sarah, Tom",
-        "hours_remaining" => 9,
-        "progress" => 45,
-        "status" => "Actif"
-    ],
-    [
-        "title" => "API interne",
-        "client" => "Client F",
-        "collaborators" => "Kevin",
-        "hours_remaining" => 14,
-        "progress" => 60,
-        "status" => "Actif"
-    ]
-];
+// Récupération des projets depuis la base de données
+$stmt = $pdo->query("
+    SELECT projects.*, clients.company_name
+    FROM projects
+    JOIN clients ON projects.client_id = clients.id
+");
 
-// Sécurisation minimale
-foreach ($projects as &$project) {
-    foreach ($project as $key => $value) {
-        $project[$key] = htmlspecialchars($value);
-    }
-}
+$projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -100,51 +50,55 @@ foreach ($projects as &$project) {
 
     <h1 class="page-title">Projets clients</h1>
     <p class="page-subtitle">
-        Vue d’ensemble des projets, des clients associés et de l’état des contrats.
+        Vue d’ensemble des projets et des clients associés.
     </p>
 
     <section class="projects-grid">
 
-        <?php foreach ($projects as $project) : ?>
+        <?php if (empty($projects)) : ?>
+            <p>Aucun projet enregistré pour le moment.</p>
+        <?php else : ?>
 
-            <div class="project-card">
+            <?php foreach ($projects as $project) : ?>
 
-                <div class="project-header">
-                    <h2><?= $project["title"] ?></h2>
+                <div class="project-card">
 
-                    <span class="badge <?= $project["status"] === "Actif" ? "active" : "warning" ?>">
-                        <?= $project["status"] ?>
-                    </span>
-                </div>
+                    <div class="project-header">
+                        <h2><?= htmlspecialchars($project["name"]) ?></h2>
 
-                <p class="project-client">
-                    Client : <strong><?= $project["client"] ?></strong>
-                </p>
+                        <span class="badge active">
+                            Actif
+                        </span>
+                    </div>
 
-                <p class="project-collab">
-                    Collaborateurs : <?= $project["collaborators"] ?>
-                </p>
+                    <p class="project-client">
+                        Client : 
+                        <strong><?= htmlspecialchars($project["company_name"]) ?></strong>
+                    </p>
 
-                <div class="hours">
-                    <span>Heures restantes : <?= $project["hours_remaining"] ?>h</span>
+                    <p class="project-collab">
+                        Collaborateurs : Équipe interne
+                    </p>
 
-                    <div class="progress">
-                        <div class="progress-fill 
-                            <?= $project["progress"] <= 30 ? "danger" : "" ?>"
-                            style="width: <?= $project["progress"] ?>%;">
+                    <div class="hours">
+                        <span>Heures restantes : --</span>
+
+                        <div class="progress">
+                            <div class="progress-fill" style="width:50%;"></div>
                         </div>
                     </div>
+
+                    <div class="project-actions">
+                        <a href="#" class="btn-link">
+                            Voir les détails du projet
+                        </a>
+                    </div>
+
                 </div>
 
-                <div class="project-actions">
-                    <a href="project-detail.php" class="btn-link">
-                        Voir les détails du projet
-                    </a>
-                </div>
+            <?php endforeach; ?>
 
-            </div>
-
-        <?php endforeach; ?>
+        <?php endif; ?>
 
     </section>
 
