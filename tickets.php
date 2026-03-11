@@ -1,15 +1,10 @@
 <?php
-session_start();
+
 require_once "config/database.php";
 
-// Récupération des tickets depuis la base de données
-$stmt = $pdo->query("
-    SELECT tickets.*, projects.name AS project_name
-    FROM tickets
-    JOIN projects ON tickets.project_id = projects.id
-");
+$stmt = $pdo->query("SELECT * FROM tickets ORDER BY id DESC");
+$tickets = $stmt->fetchAll();
 
-$tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="fr">

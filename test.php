@@ -1,3 +1,15 @@
 <?php
+
 require_once "config/database.php";
-echo "Connexion réussie !";
+
+$sql = "SELECT * FROM users";
+
+$stmt = $pdo->query($sql);
+
+$users = $stmt->fetchAll();
+
+foreach($users as $user){
+
+echo $user['name']."<br>";
+
+}

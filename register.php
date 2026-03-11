@@ -1,10 +1,13 @@
 <?php
+
+require_once "config/database.php";
+
 // =============================
 // TRAITEMENT FORMULAIRE INSCRIPTION
 // =============================
 
 $message = "";
-$messageType = ""; // success ou error
+$messageType = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -14,20 +17,61 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // Validation
     if (empty($email) || empty($password) || empty($confirmPassword)) {
+
         $message = "Tous les champs sont obligatoires.";
         $messageType = "error";
+
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
         $message = "Adresse email invalide.";
         $messageType = "error";
+
     } elseif ($password !== $confirmPassword) {
+
         $message = "Les mots de passe ne correspondent pas.";
         $messageType = "error";
+
     } else {
-        // Simulation création utilisateur
-        $message = "Inscription réussie ! Vous pouvez maintenant vous connecter.";
-        $messageType = "success";
+
+        try {
+
+            // Vérifier si l'email existe déjà
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+
+            if ($stmt->fetch()) {
+
+                $message = "Cet email est déjà utilisé.";
+                $messageType = "error";
+
+            } else {
+
+                // Hash du mot de passe
+                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+                // Insertion dans la base
+                $stmt = $pdo->prepare("
+                    INSERT INTO users (email, password)
+                    VALUES (?, ?)
+                ");
+
+                $stmt->execute([$email, $hashedPassword]);
+
+                $message = "Inscription réussie ! Vous pouvez maintenant vous connecter.";
+                $messageType = "success";
+
+            }
+
+        } catch (PDOException $e) {
+
+            $message = "Erreur base de données : " . $e->getMessage();
+            $messageType = "error";
+
+        }
+
     }
 }
+
 ?>
 
 <!DOCTYPE html>
